@@ -13,9 +13,12 @@ const MyStyledCanvas = styled.canvas`
 	border: 1px solid black;
 `
 
+const WIDTH = 500
+const HEIGHT = 500
+
 
 const innerCanvas = (props: ICanvas, ref: React.ForwardedRef<HTMLCanvasElement>) => {
-	return <MyStyledCanvas width={500} height={500} ref={ref}/>
+	return <MyStyledCanvas width={WIDTH} height={HEIGHT} ref={ref}/>
 }
 class Rectangle {
 	height: number
@@ -44,15 +47,15 @@ class Rectangle {
 
 const Canvas = React.forwardRef<HTMLCanvasElement>(innerCanvas)
 
-const drawRect = (rect: Rectangle, ctx: CanvasRenderingContext2D) => {
-	ctx.fillStyle = 'blue'
+const drawRect = (rect: Rectangle, ctx: CanvasRenderingContext2D, color: 'blue' | 'red') => {
+	ctx.fillStyle = color
 	ctx.fillRect(rect.x, rect.y, rect.width, rect.height)
 }
 
 const moveRect = (rect: Rectangle, ctx: CanvasRenderingContext2D, e: MouseEvent) => {
-	ctx.clearRect(rect.x, rect.y, rect.width, rect.height)
+	// ctx.clearRect(rect.x, rect.y, rect.width, rect.height)
 	rect.move(e)
-	ctx.fillRect(rect.x, rect.y, rect.width, rect.height)
+	// ctx.fillRect(rect.x, rect.y, rect.width, rect.height)
 }
 
 const placeRect = (rect: Rectangle, ctx: CanvasRenderingContext2D) => {
@@ -96,12 +99,21 @@ const doesHover = (rect: Rectangle, ctx: CanvasRenderingContext2D, e: MouseEvent
 	return false
 }
 
+const draw = (rects: Rectangle[], ctx: CanvasRenderingContext2D) => {
+	ctx.clearRect(0, 0, WIDTH, HEIGHT)
+
+	rects.forEach((rect, i) => drawRect(rect, ctx, i === 0 ? 'red' : 'blue'))
+}
 
 
 const useSetupCanvas = (ref: React.RefObject<HTMLCanvasElement>): void => {
 	const dragRef = useRef<boolean>(false)
 
 	let settableRect = new Rectangle(230, 90, 0, 0)
+
+	const rectangles: Rectangle[] = []
+
+	const [, setRender, ] = useState(0)
 
 	useLayoutEffect(() => {
 		if (ref.current === null) {
@@ -115,8 +127,7 @@ const useSetupCanvas = (ref: React.RefObject<HTMLCanvasElement>): void => {
 			return
 		}
 		
-		drawRect(settableRect, ctx)
-	
+		draw([settableRect], ctx)
 		const canvasClassName = canvas.className
 
 		canvas.addEventListener('mouseup', e => {
@@ -124,8 +135,10 @@ const useSetupCanvas = (ref: React.RefObject<HTMLCanvasElement>): void => {
 
 			if (hovers) {
 				placeRect(settableRect, ctx)
+
+				rectangles.push(settableRect)
 				settableRect = spawnRect()
-				drawRect(settableRect, ctx)
+				drawRect(settableRect, ctx, 'red')
 				
 				dragRef.current = false
 			}
@@ -153,8 +166,8 @@ const useSetupCanvas = (ref: React.RefObject<HTMLCanvasElement>): void => {
 		canvas.addEventListener('mousemove', e => {
 			console.log('is draggin?', dragRef.current)
 			if (dragRef.current) {
-				console.log('draggin!!!')
 				moveRect(settableRect, ctx, e)
+				draw([settableRect, ...rectangles, ], ctx)
 			}
 		})
 	}, [])
