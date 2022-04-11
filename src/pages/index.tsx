@@ -7,8 +7,6 @@ const MyContainer = styled(Container)`
 	height: 500px;
 `
 
-type ICanvas = {}
-
 const MyStyledCanvas = styled.canvas`
 	border: 1px solid black;
 `
@@ -16,8 +14,11 @@ const MyStyledCanvas = styled.canvas`
 const WIDTH = 500
 const HEIGHT = 500
 
+interface CanvasProps {
+	children?: React.ReactNode
+}
 
-const innerCanvas = (props: ICanvas, ref: React.ForwardedRef<HTMLCanvasElement>) => {
+const innerCanvas = (props: CanvasProps, ref: React.ForwardedRef<HTMLCanvasElement>) => {
 	return <MyStyledCanvas width={WIDTH} height={HEIGHT} ref={ref}/>
 }
 class Rectangle {
@@ -58,20 +59,34 @@ const moveRect = (rect: Rectangle, ctx: CanvasRenderingContext2D, e: MouseEvent)
 	// ctx.fillRect(rect.x, rect.y, rect.width, rect.height)
 }
 
-const placeRect = (rect: Rectangle, ctx: CanvasRenderingContext2D) => {
-	ctx.clearRect(rect.x, rect.y, rect.width, rect.height)
-	rect.place()
-	ctx.fillStyle = 'red'
-	ctx.fillRect(rect.x, rect.y, rect.width, rect.height)
-}
-
 const spawnRect = (): Rectangle => {
-	const width = Math.floor(Math.random() * 100)
-	const height = Math.floor(Math.random() * 100)
+	const width = Math.floor(Math.random() * 100) + 5
+	const height = Math.floor(Math.random() * 100) + 5
 
 	const rectangle = new Rectangle(height, width, 0, 0)
 
 	return rectangle
+}
+
+const overlaps = (rectA: Rectangle, rectB: Rectangle) => {
+	const rightBorderA = rectA.x + rectA.width
+	const bottomBorderA = rectA.y + rectA.height
+	const leftBorderA = rectA.x
+	const topBorderA = rectA.y
+
+	const rightBorderB = rectB.x + rectB.width
+	const bottomBorderB = rectB.y + rectB.height
+	const leftBorderB = rectB.x
+	const topBorderB = rectB.y
+
+	const overlapsX = rightBorderA > leftBorderB && rightBorderB > leftBorderA
+	const overlapsY = bottomBorderA > topBorderB && bottomBorderB > topBorderA
+
+	return overlapsY && overlapsX
+} 
+
+const collision = (rect: Rectangle, otherRectangles: Rectangle[]): boolean => {
+
 }
 
 const doesHover = (rect: Rectangle, ctx: CanvasRenderingContext2D, e: MouseEvent) => {
@@ -102,7 +117,7 @@ const doesHover = (rect: Rectangle, ctx: CanvasRenderingContext2D, e: MouseEvent
 const draw = (rects: Rectangle[], ctx: CanvasRenderingContext2D) => {
 	ctx.clearRect(0, 0, WIDTH, HEIGHT)
 
-	rects.forEach((rect, i) => drawRect(rect, ctx, i === 0 ? 'red' : 'blue'))
+	rects.forEach((rect, i) => drawRect(rect, ctx, i === rects.length - 1 ? 'red' : 'blue'))
 }
 
 
@@ -111,7 +126,7 @@ const useSetupCanvas = (ref: React.RefObject<HTMLCanvasElement>): void => {
 
 	let settableRect = new Rectangle(230, 90, 0, 0)
 
-	const rectangles: Rectangle[] = []
+	const rectangles: Rectangle[] = [ settableRect, ]
 
 	const [, setRender, ] = useState(0)
 
@@ -134,11 +149,12 @@ const useSetupCanvas = (ref: React.RefObject<HTMLCanvasElement>): void => {
 			const hovers = doesHover(settableRect, ctx, e)
 
 			if (hovers) {
-				placeRect(settableRect, ctx)
-
-				rectangles.push(settableRect)
+				console.log('rectangles:', rectangles)
+				
 				settableRect = spawnRect()
-				drawRect(settableRect, ctx, 'red')
+				rectangles.push(settableRect)
+				console.log('new rect:', settableRect)
+				draw(rectangles, ctx)
 				
 				dragRef.current = false
 			}
@@ -148,7 +164,6 @@ const useSetupCanvas = (ref: React.RefObject<HTMLCanvasElement>): void => {
 			const hovers = doesHover(settableRect, ctx, e)
 		
 			if (hovers) {
-				console.log('setting drag')
 				dragRef.current = true
 			}
 		})
@@ -164,9 +179,13 @@ const useSetupCanvas = (ref: React.RefObject<HTMLCanvasElement>): void => {
 		})
 
 		canvas.addEventListener('mousemove', e => {
-			console.log('is draggin?', dragRef.current)
 			if (dragRef.current) {
 				moveRect(settableRect, ctx, e)
+
+				if (rectangles.length === 2) {
+
+					console.log(overlaps(rectangles[0], rectangles[1]))
+				}
 				draw([settableRect, ...rectangles, ], ctx)
 			}
 		})
