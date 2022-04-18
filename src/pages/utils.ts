@@ -1,7 +1,7 @@
 import { HEIGHT, WIDTH } from './Board'
-import { Rectangle } from './Rectangle'
+import { Edge, Rectangle } from './Rectangle'
 
-export const drawRect = (rect: Rectangle, ctx: CanvasRenderingContext2D, color: 'blue' | 'red') => {
+export const drawRect = (rect: Rectangle, ctx: CanvasRenderingContext2D, color: 'lightblue' | 'red') => {
 	ctx.fillStyle = color
 	ctx.fillRect(rect.x, rect.y, rect.width, rect.height)
 }
@@ -12,16 +12,33 @@ export const drawBoundingBox = (rects: Rectangle[], ctx: CanvasRenderingContext2
 	const minY = Math.min(...rects.map(rect => rect.y))
 	const maxY = Math.max(...rects.map(rect => rect.y + rect.height))
 
+	ctx.strokeStyle = 'red'
+	ctx.lineWidth = 1
 	ctx.beginPath()
+	
 	ctx.moveTo(minX, minY)
 	ctx.lineTo(maxX, minY)
 	ctx.lineTo(maxX, maxY)
 	ctx.lineTo(minX, maxY)
 	ctx.lineTo(minX, minY)
 
-	console.log(minX, minY, maxX, maxY)
-
 	ctx.stroke()
+}
+
+const drawEdge = (edge: Edge, ctx: CanvasRenderingContext2D): void => {
+	ctx.strokeStyle = 'purple'
+	ctx.lineWidth = 6
+	ctx.beginPath()
+
+	ctx.moveTo(...edge[0])
+	ctx.lineTo(...edge[1])
+
+	console.log('drawing edge', edge)
+	ctx.stroke()
+}
+
+const drawEdgeMatches = (edges: Edge[], ctx: CanvasRenderingContext2D): void => {
+	edges.forEach(edge => drawEdge(edge, ctx))
 }
 
 export const spawnRect = (): Rectangle => {
@@ -51,7 +68,6 @@ export const overlap = (rectA: Rectangle, rectB: Rectangle) => {
 } 
 
 export const collision = (rect: Rectangle, otherRectangles: Rectangle[]): boolean => {
-	console.log('checking colission between', rect, 'and', otherRectangles)
 	if (otherRectangles.length === 0){
 		return false
 	}
@@ -77,9 +93,11 @@ export const doesHover = (rect: Rectangle, ctx: CanvasRenderingContext2D, e: Mou
 	return false
 }
 
-export const draw = (rects: Rectangle[], ctx: CanvasRenderingContext2D) => {
+export const draw = (rects: Rectangle[], edgeMatches: Edge[], ctx: CanvasRenderingContext2D) => {
 	ctx.clearRect(0, 0, WIDTH, HEIGHT)
-	drawBoundingBox(rects, ctx)
 
-	rects.forEach((rect, i) => drawRect(rect, ctx, i === rects.length - 1 ? 'red' : 'blue'))
+	drawBoundingBox(rects, ctx)
+	drawEdgeMatches(edgeMatches, ctx)
+
+	rects.forEach((rect, i) => drawRect(rect, ctx, i === rects.length - 1 ? 'red' : 'lightblue'))
 }

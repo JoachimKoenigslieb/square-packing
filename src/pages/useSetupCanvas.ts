@@ -1,6 +1,34 @@
 import { useEffect, useRef } from 'react'
 import { useRectangles } from './Context'
+import { Edge, Edges, Rectangle } from './Rectangle'
 import { collision, doesHover, draw, spawnRect } from './utils'
+
+const findEdgeMatches = (edges: Edges, rectangles: Rectangle[]) => {
+	// check if close to any edges
+	const topEdges: Edge[] = []
+	const bottomEdges: Edge[] = []
+	const rightEdges: Edge[] = []
+	const leftEdges: Edge[] = []
+	
+	rectangles.forEach(rect => {
+		const edges = rect.getEdges()
+						
+		topEdges.push(edges[0])
+		rightEdges.push(edges[1])
+		bottomEdges.push(edges[2])
+		leftEdges.push(edges[3])
+	})
+
+	const errorMargin = 4 // error margin in pixels
+
+	const topEdge = edges[0]
+	const topY = topEdge[0][1]
+
+	const matches = bottomEdges.filter(edge => Math.abs(edge[0][1] - topY) < errorMargin)
+
+	return matches
+}
+
 
 export const useSetupCanvas = (ref: React.RefObject<HTMLCanvasElement>): void => {
 	const dragRef = useRef<boolean>(false)
@@ -24,7 +52,7 @@ export const useSetupCanvas = (ref: React.RefObject<HTMLCanvasElement>): void =>
 			return
 		}
 		
-		draw(rectangles, ctx)
+		draw(rectangles, [], ctx)
 
 		const canvasClassName = canvas.className.replace('hovered', '')
 
@@ -81,7 +109,11 @@ export const useSetupCanvas = (ref: React.RefObject<HTMLCanvasElement>): void =>
 				}
 
 				settableRect.move(e)
-				draw(rectangles, ctx)
+
+				const currentEdges = settableRect.getEdges()
+				const edgeMatches = findEdgeMatches(currentEdges, rectangles)
+
+				draw(rectangles, edgeMatches, ctx)
 			}
 		}
 		
