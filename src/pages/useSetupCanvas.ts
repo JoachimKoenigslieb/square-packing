@@ -5,18 +5,14 @@ import { collision, doesHover, draw, spawnRect } from './utils'
 
 const findEdgeMatches = (edges: Edges, rectangles: Rectangle[]) => {
 	// check if close to any edges
-	const topEdges: Edge[] = []
-	const bottomEdges: Edge[] = []
-	const rightEdges: Edge[] = []
-	const leftEdges: Edge[] = []
+	const YEdges: Edge[] = []
+	const XEdges: Edge[] = []
 	
 	rectangles.forEach(rect => {
 		const edges = rect.getEdges()
-						
-		topEdges.push(edges[0])
-		rightEdges.push(edges[1])
-		bottomEdges.push(edges[2])
-		leftEdges.push(edges[3])
+							
+		YEdges.push(edges[0], edges[2])
+		XEdges.push(edges[1], edges[3])
 	})
 
 	const errorMargin = 4 // error margin in pixels
@@ -24,9 +20,21 @@ const findEdgeMatches = (edges: Edges, rectangles: Rectangle[]) => {
 	const topEdge = edges[0]
 	const topY = topEdge[0][1]
 
-	const matches = bottomEdges.filter(edge => Math.abs(edge[0][1] - topY) < errorMargin)
+	const rightEdge = edges[1]
+	const rightX = rightEdge[0][0]
 
-	return matches
+	const bottomEdge = edges[2]
+	const bottomY = bottomEdge[0][1]
+
+	const leftEdge = edges[3]
+	const leftX = leftEdge[0][0]
+
+	const matchesTop = YEdges.filter(edge => Math.abs(edge[0][1] - topY) < errorMargin)
+	const matchesBottom = YEdges.filter(edge => Math.abs(edge[0][1] - bottomY) < errorMargin)
+	const matchesRight = XEdges.filter(edge => Math.abs(edge[0][0] - rightX) < errorMargin)
+	const matchesLeft = XEdges.filter(edge => Math.abs(edge[0][0] - leftX) < errorMargin)
+
+	return [ ...matchesTop, ...matchesBottom, ...matchesRight, ...matchesLeft, ]
 }
 
 
@@ -34,7 +42,7 @@ export const useSetupCanvas = (ref: React.RefObject<HTMLCanvasElement>): void =>
 	const dragRef = useRef<boolean>(false)
 
 	const { rectangles, setRectangles, } = useRectangles()
-	const settableRect = rectangles[rectangles.length - 1]
+	const settableRect = spawnRect()
 
 	useEffect(() => {
 		if (ref.current === null) {
@@ -47,29 +55,19 @@ export const useSetupCanvas = (ref: React.RefObject<HTMLCanvasElement>): void =>
 		if (ctx === null) {
 			return
 		}
-
-		if (!settableRect) {
-			return
-		}
 		
-		draw(rectangles, [], ctx)
+		draw(rectangles, [], settableRect, ctx)
 
 		const canvasClassName = canvas.className.replace('hovered', '')
 
 		const upHandler = (e: MouseEvent) => {
-			if (!settableRect) {
-				return
-			}
-
 			const hovers = doesHover(settableRect, ctx, e)
 
-			if (hovers) {
-				const nextRect = spawnRect()
-
+			if (hovers && dragRef.current === true) {
 				if (collision(settableRect, rectangles.slice(0, -1))) {
 					alert('cant set there!')
 				} else {
-					setRectangles(rectangles => [...rectangles, nextRect, ])
+					setRectangles(rectangles => [...rectangles, settableRect, ])
 					
 					dragRef.current = false
 				}
@@ -77,10 +75,6 @@ export const useSetupCanvas = (ref: React.RefObject<HTMLCanvasElement>): void =>
 		}
 
 		const downHandler = (e: MouseEvent) => {
-			if (!settableRect) {
-				return
-			}
-
 			const hovers = doesHover(settableRect, ctx, e)
 		
 			if (hovers) {
@@ -89,10 +83,6 @@ export const useSetupCanvas = (ref: React.RefObject<HTMLCanvasElement>): void =>
 		}
 
 		const hoverHandler = (e: MouseEvent) => {
-			if (!settableRect) {
-				return
-			}
-
 			const hovers = doesHover(settableRect, ctx, e)
 	
 			if (hovers) {
@@ -104,16 +94,12 @@ export const useSetupCanvas = (ref: React.RefObject<HTMLCanvasElement>): void =>
 
 		const dragHandler = (e: MouseEvent) => {
 			if (dragRef.current) {
-				if (!settableRect) {
-					return
-				}
-
 				settableRect.move(e)
 
 				const currentEdges = settableRect.getEdges()
 				const edgeMatches = findEdgeMatches(currentEdges, rectangles)
 
-				draw(rectangles, edgeMatches, ctx)
+				draw(rectangles, edgeMatches, settableRect, ctx)
 			}
 		}
 		

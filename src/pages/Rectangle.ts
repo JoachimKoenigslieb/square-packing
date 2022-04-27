@@ -21,7 +21,7 @@ export class Rectangle {
 		const top: Edge = [ [this.x, this.y], [ this.x + this.width, this.y, ], ]
 		const bottom: Edge = [ [this.x, this.y + this.height], [ this.x + this.width, this.y + this.height, ], ]
 
-		const left: Edge = [ [ this.x, this.y], [ this.x + this.height, this.y, ], ]
+		const left: Edge = [ [ this.x, this.y], [ this.x, this.y + this.height, ], ]
 		const right: Edge = [ [ this.x + this.width, this.y ], [ this.x + this.width, this.y + this.height, ], ]
 
 		return [ top, right, bottom, left, ] // like a clock

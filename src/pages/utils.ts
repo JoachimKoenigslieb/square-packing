@@ -1,7 +1,8 @@
 import { HEIGHT, WIDTH } from './Board'
 import { Edge, Rectangle } from './Rectangle'
 
-export const drawRect = (rect: Rectangle, ctx: CanvasRenderingContext2D, color: 'lightblue' | 'red') => {
+
+export const drawRect = (rect: Rectangle, ctx: CanvasRenderingContext2D, color: string) => {
 	ctx.fillStyle = color
 	ctx.fillRect(rect.x, rect.y, rect.width, rect.height)
 }
@@ -33,7 +34,6 @@ const drawEdge = (edge: Edge, ctx: CanvasRenderingContext2D): void => {
 	ctx.moveTo(...edge[0])
 	ctx.lineTo(...edge[1])
 
-	console.log('drawing edge', edge)
 	ctx.stroke()
 }
 
@@ -93,11 +93,12 @@ export const doesHover = (rect: Rectangle, ctx: CanvasRenderingContext2D, e: Mou
 	return false
 }
 
-export const draw = (rects: Rectangle[], edgeMatches: Edge[], ctx: CanvasRenderingContext2D) => {
+export const draw = (rects: Rectangle[], edgeMatches: Edge[], settableRect: Rectangle, ctx: CanvasRenderingContext2D) => {
 	ctx.clearRect(0, 0, WIDTH, HEIGHT)
 
-	drawBoundingBox(rects, ctx)
+	drawBoundingBox([...rects, settableRect], ctx)
 	drawEdgeMatches(edgeMatches, ctx)
+	drawRect(settableRect, ctx, 'green')
 
-	rects.forEach((rect, i) => drawRect(rect, ctx, i === rects.length - 1 ? 'red' : 'lightblue'))
+	rects.forEach((rect, i) => drawRect(rect, ctx, 'lightblue'))
 }

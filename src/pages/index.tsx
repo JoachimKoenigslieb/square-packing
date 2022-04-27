@@ -12,7 +12,7 @@ const MyContainer = styled(Container)`
 `
 
 const IndexPage = () => {
-	const [ rectangles, setRectangles, ] = useState<Rectangle[]>([ spawnRect(), ])
+	const [ rectangles, setRectangles, ] = useState<Rectangle[]>([])
 
 	return (
 		<Context.Provider value={{ rectangles, setRectangles, }}>
